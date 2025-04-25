@@ -13,7 +13,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.idk.pokerplanning.ui.theme.PokerPlanningTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,12 +33,12 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(modifier: Modifier = Modifier) {
+fun Greeting(
+    modifier: Modifier = Modifier
+) {
     Button(
-        modifier = modifier,
-        onClick = {}
-    ) {
-        Text("Create room")
+        modifier = modifier, onClick = {}) {
+        Text(text = "Create room")
     }
 }
 
