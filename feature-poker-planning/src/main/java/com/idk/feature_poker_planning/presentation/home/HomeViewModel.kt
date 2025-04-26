@@ -2,7 +2,8 @@ package com.idk.feature_poker_planning.presentation.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.idk.feature_poker_planning.domain.repository.RoomRepository
+import com.idk.feature_poker_planning.domain.CreateRoomUseCase
+import com.idk.feature_poker_planning.domain.LoadRoomsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,8 +14,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val repository: RoomRepository
+    private val createRoomUseCase: CreateRoomUseCase, private val loadRoomsUseCase: LoadRoomsUseCase
 ) : ViewModel() {
+
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
@@ -22,17 +24,18 @@ class HomeViewModel @Inject constructor(
         observeRooms()
     }
 
-    private fun observeRooms() {
+    fun createRoom(desiredName: String? = null) {
         viewModelScope.launch {
-            repository.observeRooms().collect { rooms ->
-                _uiState.update { it.copy(rooms = rooms) }
-            }
+            createRoomUseCase(desiredName)
+            observeRooms()
         }
     }
 
-    fun createRoom() {
+    private fun observeRooms() {
         viewModelScope.launch {
-            repository.createRoom()
+            loadRoomsUseCase().collect { rooms ->
+                _uiState.update { it.copy(rooms = rooms) }
+            }
         }
     }
 }

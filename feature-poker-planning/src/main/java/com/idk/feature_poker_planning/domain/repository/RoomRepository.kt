@@ -5,5 +5,5 @@ import kotlinx.coroutines.flow.Flow
 
 interface RoomRepository {
     fun observeRooms(): Flow<List<Room>>
-    suspend fun createRoom()
+    suspend fun createRoom(room: Room)
 }

@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-lint:
-    name: Build & Lint
+    name: Build, Lint & Unit Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -47,3 +47,6 @@ jobs:
 
       - name: Run Lint
         run: ./gradlew lintDebug --no-daemon --stacktrace
+
+      - name: Unit Tests
+        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
