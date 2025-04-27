@@ -1,7 +1,9 @@
 package com.idk.feature_poker_planning.di
 
-import com.idk.feature_poker_planning.data.repository.FirestoreRepository
+import com.idk.feature_poker_planning.data.repository.DataStoreUserProfileRepositoryImpl
+import com.idk.feature_poker_planning.data.repository.FirestoreRepositoryImpl
 import com.idk.feature_poker_planning.domain.repository.RoomRepository
+import com.idk.feature_poker_planning.domain.repository.UserProfileRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -15,6 +17,13 @@ abstract class FeatureModule {
     @Binds
     @Singleton
     abstract fun bindRoomRepository(
-        impl: FirestoreRepository
+        impl: FirestoreRepositoryImpl
     ): RoomRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindDataStoreRepository(
+        impl: DataStoreUserProfileRepositoryImpl
+    ): UserProfileRepository
+
 }

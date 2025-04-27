@@ -11,6 +11,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.idk.feature_poker_planning.presentation.home.HomeScreen
 import com.idk.feature_poker_planning.presentation.rooms.RoomScreen
+import com.idk.pokerplanning.navigation.AppNavHost
 import com.idk.pokerplanning.ui.theme.PokerPlanningTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -22,24 +23,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             PokerPlanningTheme {
-                val navController = rememberNavController()
-                NavHost(
-                    navController = navController, startDestination = "home"
-                ) {
-                    composable("home") {
-                        HomeScreen(
-                            onRoomClick = { navController.navigate("room/$it") })
-                    }
-                    composable(
-                        route = "room/{roomId}",
-                        arguments = listOf(navArgument("roomId") { type = NavType.StringType })
-                    ) { backStack ->
-                        val roomId = backStack.arguments!!.getString("roomId")!!
-//                        RoomScreen(roomId = roomId)
-                    }
-                }
+                AppNavHost()
             }
         }
     }
 }
-

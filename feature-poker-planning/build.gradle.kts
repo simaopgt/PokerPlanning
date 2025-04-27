@@ -17,11 +17,11 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "1.8"
     }
 
     buildFeatures {
@@ -58,6 +58,11 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
+
+    // DataStore
+    implementation(libs.androidx.dataStore)
+    implementation(libs.androidx.dataStore.core)
+    implementation(libs.androidx.dataStore.preferences)
 
     // Firebase
     implementation(platform(libs.firebase.bom))
