@@ -17,6 +17,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import junit.framework.Assert.assertEquals
+import junit.framework.Assert.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -46,8 +47,7 @@ class FirestoreRepositoryImplTest {
         every { firestore.collection(FirestoreConstants.ROOMS_COLLECTION) } returns collection
         every {
             collection.orderBy(
-                FirestoreConstants.CREATED_AT_FIELD,
-                Query.Direction.ASCENDING
+                FirestoreConstants.CREATED_AT_FIELD, Query.Direction.ASCENDING
             )
         } returns query
         every { query.addSnapshotListener(capture(roomSnapshotSlot)) } returns roomReg
@@ -112,15 +112,37 @@ class FirestoreRepositoryImplTest {
         val captured = mapSlot.captured
         assertEquals(TestDataProvider.defaultRoom.id, captured[FirestoreConstants.ROOM_ID_FIELD])
         assertEquals(
-            TestDataProvider.defaultRoom.name,
-            captured[FirestoreConstants.ROOM_NAME_FIELD]
+            TestDataProvider.defaultRoom.name, captured[FirestoreConstants.ROOM_NAME_FIELD]
         )
         assertEquals(
-            TestDataProvider.defaultRoom.createdAt,
-            captured[FirestoreConstants.CREATED_AT_FIELD]
+            TestDataProvider.defaultRoom.createdAt, captured[FirestoreConstants.CREATED_AT_FIELD]
         )
         @Suppress("UNCHECKED_CAST") val participantsList =
             captured[FirestoreConstants.PARTICIPANTS_FIELD] as List<Map<String, Any?>>
         assertEquals(TestDataProvider.defaultRoom.participants.size, participantsList.size)
+    }
+
+    @Test
+    fun invoke_resetVotes_clearsAllVotesAndUpdatesInFirestore() = runTest {
+        val raw = TestDataProvider.participantsMaps
+        val snapshot = mockk<DocumentSnapshot>()
+        every { snapshot.get(FirestoreConstants.PARTICIPANTS_FIELD) } returns raw
+
+        every { document.get() } returns Tasks.forResult(snapshot)
+        val updateSlot = slot<List<Map<String, Any?>>>()
+        every {
+            document.update(
+                FirestoreConstants.PARTICIPANTS_FIELD, capture(updateSlot)
+            )
+        } returns Tasks.forResult(null)
+
+        repository.resetVotes(TestDataProvider.TEST_ROOM_ID)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        val cleared = updateSlot.captured
+        assertEquals(raw.size, cleared.size)
+        cleared.forEach { entry ->
+            assertTrue(entry[FirestoreConstants.VOTE_FIELD] == null)
+        }
     }
 }

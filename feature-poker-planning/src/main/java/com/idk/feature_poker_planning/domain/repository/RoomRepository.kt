@@ -10,4 +10,5 @@ interface RoomRepository {
     suspend fun addParticipant(roomId: String, userId: String, name: String, avatar: String)
     fun observeParticipants(roomId: String): Flow<List<Participant>>
     suspend fun submitVote(roomId: String, userId: String, name: String, avatar: String, vote: Int)
+    suspend fun resetVotes(roomId: String)
 }

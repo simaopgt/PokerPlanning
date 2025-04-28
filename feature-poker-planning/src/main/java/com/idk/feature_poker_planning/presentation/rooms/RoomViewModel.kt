@@ -1,13 +1,14 @@
 package com.idk.feature_poker_planning.presentation.rooms
 
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.idk.feature_poker_planning.domain.GetUserProfileUseCase
 import com.idk.feature_poker_planning.domain.JoinRoomUseCase
 import com.idk.feature_poker_planning.domain.LoadParticipantsUseCase
+import com.idk.feature_poker_planning.domain.ResetVotesUseCase
 import com.idk.feature_poker_planning.domain.SubmitVoteUseCase
-import com.idk.feature_poker_planning.utils.RoomNavArgs
+import com.idk.feature_poker_planning.navigation.PokerPlanningDestinations
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,15 +23,22 @@ class RoomViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val loadParticipantsUseCase: LoadParticipantsUseCase,
     private val submitVoteUseCase: SubmitVoteUseCase,
-    private val joinRoomUseCase: JoinRoomUseCase
+    private val joinRoomUseCase: JoinRoomUseCase,
+    private val resetVotesUseCase: ResetVotesUseCase
 ) : ViewModel() {
 
     private val roomId: String = checkNotNull(
-        savedStateHandle[RoomNavArgs.ARG_ROOM_ID]
-    ) { "roomId is required in SavedStateHandle" }
+        savedStateHandle[PokerPlanningDestinations.ARG_ROOM_ID]
+    ) { "roomId é obrigatório" }
+
+    private val rawRoomName: String = checkNotNull(
+        savedStateHandle[PokerPlanningDestinations.ARG_ROOM_NAME]
+    ) { "roomName é obrigatório" }
+
+    private val roomNameArg: String = Uri.decode(rawRoomName)
 
     private val _uiState = MutableStateFlow(
-        RoomUiState(roomName = roomId)
+        RoomUiState(roomName = roomNameArg, currentUserId = "")
     )
     val uiState: StateFlow<RoomUiState> = _uiState.asStateFlow()
 
@@ -41,10 +49,9 @@ class RoomViewModel @Inject constructor(
 
     private fun observeParticipants() {
         viewModelScope.launch {
-            loadParticipantsUseCase(roomId)
-                .map { list -> list.distinctBy { it.userId } }
-                .collect { uniqueList ->
-                    _uiState.update { it.copy(participants = uniqueList) }
+            loadParticipantsUseCase(roomId).map { list -> list.distinctBy { it.userId } }
+                .collect { participants ->
+                    _uiState.update { it.copy(participants = participants) }
                 }
         }
     }
@@ -54,9 +61,9 @@ class RoomViewModel @Inject constructor(
     }
 
     fun submitVote() {
-        val voteValue = uiState.value.currentVoteInput.toIntOrNull() ?: return
+        val vote = _uiState.value.currentVoteInput.toIntOrNull() ?: return
         viewModelScope.launch {
-            submitVoteUseCase(roomId, voteValue)
+            submitVoteUseCase(roomId, vote)
             _uiState.update { it.copy(currentVoteInput = "", votesRevealed = false) }
         }
     }
@@ -66,6 +73,14 @@ class RoomViewModel @Inject constructor(
     }
 
     fun startNewSession() {
-        _uiState.update { it.copy(votesRevealed = false, currentVoteInput = "") }
+        viewModelScope.launch {
+            resetVotesUseCase(roomId)
+
+            _uiState.update {
+                it.copy(
+                    votesRevealed = false, currentVoteInput = ""
+                )
+            }
+        }
     }
 }

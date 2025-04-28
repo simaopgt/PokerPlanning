@@ -48,7 +48,7 @@ import com.idk.feature.poker.planning.R
 fun HomeScreen(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
-    onRoomClick: (String) -> Unit
+    onRoomClick: (roomId: String, roomName: String) -> Unit,
 ) {
     val state by viewModel.uiState.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
@@ -111,7 +111,7 @@ fun HomeScreen(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onRoomClick(room.id) }
+                            .clickable { onRoomClick(room.id, room.name) }
                             .padding(vertical = 4.dp))
                     HorizontalDivider()
                 }

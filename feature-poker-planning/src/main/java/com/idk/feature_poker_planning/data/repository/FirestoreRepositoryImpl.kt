@@ -118,4 +118,20 @@ class FirestoreRepositoryImpl @Inject constructor(
 
         documentRef.update(PARTICIPANTS_FIELD, updatedParticipants).await()
     }
+
+    override suspend fun resetVotes(roomId: String) {
+        val docRef = firestore.collection(ROOMS_COLLECTION).document(roomId)
+        val snapshot = docRef.get().await()
+        val rawParticipants =
+            snapshot.get(PARTICIPANTS_FIELD) as? List<Map<String, Any>> ?: emptyList()
+
+        val cleared = rawParticipants.map { entry ->
+            mutableMapOf<String, Any?>().apply {
+                putAll(entry)
+                put(VOTE_FIELD, null)
+            }
+        }
+
+        docRef.update(PARTICIPANTS_FIELD, cleared).await()
+    }
 }
