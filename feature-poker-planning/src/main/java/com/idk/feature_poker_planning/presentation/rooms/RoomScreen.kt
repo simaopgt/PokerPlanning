@@ -258,7 +258,7 @@ private fun ActionButtons(
     ) {
         Button(
             onClick = onVoteClick,
-            enabled = !hasVoted || !votesRevealed,
+            enabled = !hasVoted && !votesRevealed,
             modifier = Modifier.weight(1f),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {

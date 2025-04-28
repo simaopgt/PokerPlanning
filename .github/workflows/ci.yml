@@ -1,4 +1,4 @@
-name: Android CI – Build & Lint
+name: Android CI – Build, Lint, Unit Tests & UI Tests
 
 on:
   push:
@@ -42,11 +42,56 @@ jobs:
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x ./gradlew
 
-      - name: Run Build
-        run: ./gradlew assembleDebug --no-daemon --stacktrace
+      - name: Build App
+        run: ./gradlew clean assembleDebug --no-daemon --stacktrace
 
       - name: Run Lint
         run: ./gradlew lintDebug --no-daemon --stacktrace
 
       - name: Unit Tests
         run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
+
+  ui-tests:
+    name: UI Tests on Firebase Test Lab
+    runs-on: ubuntu-latest
+    needs: build-lint
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v2
+        with:
+          api-level: 34
+          build-tools: "34.0.0"
+
+      - name: Grant execute permission for Gradle wrapper
+        run: chmod +x ./gradlew
+
+      - name: Assemble App Bundle and Test APK
+        run: |
+          ./gradlew clean bundleDebug \
+                     feature-poker-planning:assembleDebugAndroidTest \
+                     --no-daemon --stacktrace
+
+      - name: Authenticate gcloud
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Run UI Tests on Firebase Test Lab
+        run: |
+          gcloud firebase test android run \
+            --type instrumentation \
+            --app  app/build/outputs/bundle/debug/app-debug.aab \
+            --test feature-poker-planning/build/outputs/apk/androidTest/debug/feature-poker-planning-debug-androidTest.apk \
+            --device model=Pixel2,version=30,locale=pt_BR,orientation=portrait \
+            --timeout 10m
