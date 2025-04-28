@@ -1,13 +1,19 @@
 package com.idk.feature_poker_planning.domain
 
+import com.idk.feature_poker_planning.domain.model.UserProfile
 import com.idk.feature_poker_planning.domain.repository.UserProfileRepository
 import com.idk.feature_poker_planning.utils.TestDataProvider
 import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.slot
+import junit.framework.Assert.assertEquals
+import junit.framework.Assert.assertSame
+import junit.framework.Assert.assertTrue
+import junit.framework.Assert.fail
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import org.junit.Assert
 import org.junit.Test
 
 class SetUserProfileUseCaseTest {
@@ -15,23 +21,29 @@ class SetUserProfileUseCaseTest {
     private val useCase = SetUserProfileUseCase(repository)
 
     @Test
-    fun invoke_withValidProfile_callsRepository() = runTest {
-        coJustRun { repository.saveProfile(TestDataProvider.defaultUserProfile) }
+    fun invoke_savesProfileWithGeneratedUserId_whenUserIdIsBlank() = runTest {
+        val slot = slot<UserProfile>()
+        coJustRun { repository.saveProfile(capture(slot)) }
 
         useCase(TestDataProvider.defaultUserProfile)
 
-        coVerify(exactly = 1) { repository.saveProfile(TestDataProvider.defaultUserProfile) }
+        coVerify(exactly = 1) { repository.saveProfile(any()) }
+        val saved = slot.captured
+        assertTrue(saved.userId.isNotBlank())
+        assertEquals(TestDataProvider.defaultUserProfile.userName, saved.userName)
+        assertEquals(TestDataProvider.defaultUserProfile.avatar, saved.avatar)
     }
 
     @Test
-    fun invoke_repositoryThrows_propagatesException() = runTest {
-        coEvery { repository.saveProfile(TestDataProvider.defaultUserProfile) } throws TestDataProvider.testError
+    fun invoke_propagatesException_whenRepositoryThrows() = runTest {
+        val exception = TestDataProvider.testError
+        coEvery { repository.saveProfile(any()) } throws exception
 
         try {
             useCase(TestDataProvider.defaultUserProfile)
-            Assert.fail("Expected RuntimeException")
+            fail("Expected RuntimeException")
         } catch (e: RuntimeException) {
-            Assert.assertEquals(TestDataProvider.testError, e)
+            assertSame(exception, e)
         }
     }
 }

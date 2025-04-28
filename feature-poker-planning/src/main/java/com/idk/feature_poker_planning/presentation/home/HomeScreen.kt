@@ -54,7 +54,7 @@ fun HomeScreen(
     var showDialog by remember { mutableStateOf(false) }
     var roomName by remember { mutableStateOf("") }
 
-    BackHandler { /* no-op */ }
+    BackHandler { /* nothing to do */ }
 
     Scaffold(modifier = modifier.fillMaxSize(), topBar = {
         TopAppBar(

@@ -1,7 +1,11 @@
 package com.idk.feature_poker_planning.domain.model
 
+import com.google.firebase.firestore.IgnoreExtraProperties
+
+@IgnoreExtraProperties
 data class Participant(
-    val userId: String,
-    val name: String,
-    val vote: Int? = null
+    var userId: String = "",
+    var name: String = "",
+    var avatar: String = "",
+    var vote: Int? = null
 )

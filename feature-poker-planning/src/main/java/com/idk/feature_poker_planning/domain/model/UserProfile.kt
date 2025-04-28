@@ -1,7 +1,10 @@
 package com.idk.feature_poker_planning.domain.model
 
+import com.google.firebase.firestore.IgnoreExtraProperties
+
+@IgnoreExtraProperties
 data class UserProfile(
-    val userId: String,
-    val userName: String,
-    val avatar: String
+    var userId: String,
+    var userName: String,
+    var avatar: String
 )

@@ -1,5 +1,6 @@
 package com.idk.feature_poker_planning.presentation.rooms
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +22,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,68 +36,81 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.idk.feature_poker_planning.domain.model.Participant
+import com.idk.feature.poker.planning.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RoomScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: RoomViewModel
+    viewModel: RoomViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val currentUserId = uiState.currentUserId
+    val currentUser = uiState.participants.firstOrNull { it.userId == currentUserId }
+    val others = uiState.participants.filter { it.userId != currentUserId }
+    val displayList = listOfNotNull(currentUser) + others
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = uiState.roomName, style = MaterialTheme.typography.titleLarge) },
+                title = { Text(uiState.roomName, style = MaterialTheme.typography.titleLarge) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
         },
         modifier = modifier.fillMaxSize()
-    ) { innerPadding ->
+    ) { paddingValues ->
         Column(
             modifier = Modifier
-                .padding(innerPadding)
+                .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
-            Text(text = "Team", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
+            Text("Team", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
 
             LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(uiState.participants.take(6)) { participant ->
-                    ParticipantAvatar(participant)
+                items(displayList.take(6), key = { it.userId }) { participant ->
+                    ParticipantAvatar(
+                        avatar = participant.avatar,
+                        name = participant.name,
+                        vote = participant.vote,
+                        isCurrentUser = participant.userId == currentUserId,
+                        votesRevealed = uiState.votesRevealed
+                    )
                 }
             }
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp))
 
             if (uiState.votesRevealed) {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(uiState.participants.take(6)) { participant ->
+                    items(displayList.take(6), key = { it.userId }) { participant ->
                         VoteBubble(vote = participant.vote)
                     }
                 }
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(Modifier.height(16.dp))
             }
 
             InfoCard(votesRevealed = uiState.votesRevealed)
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp))
 
             VoteInputField(
                 voteInput = uiState.currentVoteInput,
                 onValueChange = viewModel::onVoteInputChange
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp))
 
             ActionButtons(
                 votesRevealed = uiState.votesRevealed,
@@ -108,17 +123,46 @@ fun RoomScreen(
 }
 
 @Composable
-private fun ParticipantAvatar(participant: Participant) {
+private fun ParticipantAvatar(
+    avatar: String,
+    name: String,
+    vote: Int?,
+    isCurrentUser: Boolean,
+    votesRevealed: Boolean
+) {
+    val context = LocalContext.current
+    val resId = remember(avatar) {
+        context.resources.getIdentifier(avatar, "drawable", context.packageName)
+    }.takeIf { it != 0 } ?: R.drawable.unknow
+    val painter = painterResource(id = resId)
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        // TODO: replace placeholder with actual image loader
-        Box(
+        Image(
+            painter = painter,
+            contentDescription = name,
             modifier = Modifier
                 .size(56.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer)
+                .background(
+                    if (isCurrentUser) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.primaryContainer
+                )
         )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(text = participant.name, style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = if (isCurrentUser) "$name (Você)" else name,
+            style = MaterialTheme.typography.bodySmall,
+            color = if (isCurrentUser) MaterialTheme.colorScheme.onPrimary
+            else MaterialTheme.colorScheme.onPrimaryContainer
+        )
+        if (isCurrentUser && votesRevealed) {
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = vote?.toString() ?: "-",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onPrimary
+            )
+        }
     }
 }
 
@@ -164,7 +208,7 @@ private fun InfoCard(votesRevealed: Boolean) {
 @Composable
 private fun VoteInputField(voteInput: String, onValueChange: (String) -> Unit) {
     Column {
-        Text(text = "Input your vote here", style = MaterialTheme.typography.bodyMedium)
+        Text(text = "Insira aqui o seu voto:", style = MaterialTheme.typography.bodyMedium)
         Spacer(modifier = Modifier.height(4.dp))
         OutlinedTextField(
             value = voteInput,
@@ -184,14 +228,18 @@ private fun ActionButtons(
     onNewSessionClick: () -> Unit
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-        Button(onClick = onVoteClick, modifier = Modifier.weight(1f)) {
-            Text("Vote")
+        Button(
+            onClick = onVoteClick,
+            modifier = Modifier.weight(1f),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+        ) {
+            Text("Votar")
         }
         Button(
             onClick = if (votesRevealed) onNewSessionClick else onRevealClick,
             modifier = Modifier.weight(1f)
         ) {
-            Text(if (!votesRevealed) "Reveal Votes" else "New Session")
+            Text(if (!votesRevealed) "Revelar Votos" else "Nova Sessão")
         }
     }
 }

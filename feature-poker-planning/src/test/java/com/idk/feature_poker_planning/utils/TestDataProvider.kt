@@ -24,19 +24,19 @@ object TestDataProvider {
     val participantsMaps: List<Map<String, Any?>> = listOf(
         mapOf(
             FirestoreConstants.USER_ID_FIELD to "u1",
-            FirestoreConstants.NAME_FIELD to "Alice",
+            FirestoreConstants.USER_NAME_FIELD to "Alice",
             FirestoreConstants.VOTE_FIELD to null
         ),
         mapOf(
             FirestoreConstants.USER_ID_FIELD to "u2",
-            FirestoreConstants.NAME_FIELD to "Bob",
+            FirestoreConstants.USER_NAME_FIELD to "Bob",
             FirestoreConstants.VOTE_FIELD to 7L
         )
     )
     val participants: List<Participant> = participantsMaps.map { data ->
         Participant(
             userId = data[FirestoreConstants.USER_ID_FIELD] as String,
-            name = data[FirestoreConstants.NAME_FIELD] as String,
+            name = data[FirestoreConstants.USER_NAME_FIELD] as String,
             vote = (data[FirestoreConstants.VOTE_FIELD] as? Long)?.toInt()
         )
     }

@@ -1,6 +1,7 @@
 package com.idk.feature_poker_planning.data.repository
 
 import app.cash.turbine.test
+import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
@@ -43,7 +44,12 @@ class FirestoreRepositoryImplTest {
     fun setup() {
         Dispatchers.setMain(dispatcher)
         every { firestore.collection(FirestoreConstants.ROOMS_COLLECTION) } returns collection
-        every { collection.orderBy(FirestoreConstants.CREATED_AT_FIELD, Query.Direction.ASCENDING) } returns query
+        every {
+            collection.orderBy(
+                FirestoreConstants.CREATED_AT_FIELD,
+                Query.Direction.ASCENDING
+            )
+        } returns query
         every { query.addSnapshotListener(capture(roomSnapshotSlot)) } returns roomReg
         every { collection.document(TestDataProvider.TEST_ROOM_ID) } returns document
         every { document.addSnapshotListener(capture(partSnapshotSlot)) } returns partReg
@@ -56,7 +62,7 @@ class FirestoreRepositoryImplTest {
     }
 
     @Test
-    fun observeRooms_emitsListOnSnapshot() = runTest {
+    fun invoke_emitsListOfRooms_whenSnapshotListenerFires() = runTest {
         repository.observeRooms().test {
             val fakeDoc = mockk<DocumentSnapshot> {
                 every { id } returns TestDataProvider.TEST_ROOM_ID
@@ -65,8 +71,10 @@ class FirestoreRepositoryImplTest {
             val snapshot = mockk<QuerySnapshot> {
                 every { documents } returns listOf(fakeDoc)
             }
+
             roomSnapshotSlot.captured.onEvent(snapshot, null)
             dispatcher.scheduler.advanceUntilIdle()
+
             val rooms = awaitItem()
             assertEquals(1, rooms.size)
             assertEquals(TestDataProvider.TEST_ROOM_ID, rooms[0].id)
@@ -75,10 +83,12 @@ class FirestoreRepositoryImplTest {
     }
 
     @Test
-    fun observeParticipants_emitsListOnSnapshot() = runTest {
+    fun invoke_emitsListOfParticipants_whenSnapshotListenerFires() = runTest {
         repository.observeParticipants(TestDataProvider.TEST_ROOM_ID).test {
             val snapshot = mockk<DocumentSnapshot>()
-            every { snapshot.get(FirestoreConstants.PARTICIPANTS_FIELD) } returns TestDataProvider.participantsMaps
+            every {
+                snapshot.get(FirestoreConstants.PARTICIPANTS_FIELD)
+            } returns TestDataProvider.participantsMaps
 
             partSnapshotSlot.captured.onEvent(snapshot, null)
             dispatcher.scheduler.advanceUntilIdle()
@@ -90,13 +100,27 @@ class FirestoreRepositoryImplTest {
     }
 
     @Test
-    fun createRoom_invokesSet() = runTest {
-        val roomSlot = slot<Room>()
+    fun invoke_setsMapWithRoomFields_whenCreateRoomInvoked() = runTest {
+        val mapSlot = slot<Map<String, Any?>>()
+        every { firestore.collection(FirestoreConstants.ROOMS_COLLECTION) } returns collection
         every { collection.document(TestDataProvider.TEST_ROOM_ID) } returns document
-        every { document.set(capture(roomSlot)) } returns com.google.android.gms.tasks.Tasks.forResult(null)
+        every { document.set(capture(mapSlot)) } returns Tasks.forResult(null)
+
         repository.createRoom(TestDataProvider.defaultRoom)
         dispatcher.scheduler.advanceUntilIdle()
-        assertEquals(TestDataProvider.TEST_ROOM_ID, roomSlot.captured.id)
-        assertEquals(TestDataProvider.defaultRoom.name, roomSlot.captured.name)
+
+        val captured = mapSlot.captured
+        assertEquals(TestDataProvider.defaultRoom.id, captured[FirestoreConstants.ROOM_ID_FIELD])
+        assertEquals(
+            TestDataProvider.defaultRoom.name,
+            captured[FirestoreConstants.ROOM_NAME_FIELD]
+        )
+        assertEquals(
+            TestDataProvider.defaultRoom.createdAt,
+            captured[FirestoreConstants.CREATED_AT_FIELD]
+        )
+        @Suppress("UNCHECKED_CAST") val participantsList =
+            captured[FirestoreConstants.PARTICIPANTS_FIELD] as List<Map<String, Any?>>
+        assertEquals(TestDataProvider.defaultRoom.participants.size, participantsList.size)
     }
 }

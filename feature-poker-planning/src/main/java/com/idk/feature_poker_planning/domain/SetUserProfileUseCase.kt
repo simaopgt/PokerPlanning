@@ -10,6 +10,9 @@ class SetUserProfileUseCase @Inject constructor(
     private val repository: UserProfileRepository
 ) {
     suspend operator fun invoke(profile: UserProfile) {
-        repository.saveProfile(profile)
+        val actualId = profile.userId.takeIf { it.isNotBlank() }
+            ?: java.util.UUID.randomUUID().toString()
+        val toSave = profile.copy(userId = actualId)
+        repository.saveProfile(toSave)
     }
 }

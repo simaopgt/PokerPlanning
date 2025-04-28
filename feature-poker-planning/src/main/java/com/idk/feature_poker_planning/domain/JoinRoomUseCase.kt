@@ -5,17 +5,17 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class SubmitVoteUseCase @Inject constructor(
-    private val repository: RoomRepository, private val getUserProfileUseCase: GetUserProfileUseCase
+class JoinRoomUseCase @Inject constructor(
+    private val getUserProfileUseCase: GetUserProfileUseCase,
+    private val roomRepository: RoomRepository
 ) {
-    suspend operator fun invoke(roomId: String, vote: Int) {
+    suspend operator fun invoke(roomId: String) {
         val profile = getUserProfileUseCase()
-        repository.submitVote(
+        roomRepository.addParticipant(
             roomId = roomId,
             userId = profile.userId,
             name = profile.userName,
-            avatar = profile.avatar,
-            vote = vote
+            avatar = profile.avatar
         )
     }
 }

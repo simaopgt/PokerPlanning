@@ -5,7 +5,9 @@ import com.google.firebase.firestore.IgnoreExtraProperties
 
 @IgnoreExtraProperties
 data class Room(
-    val id: String = "",
-    val name: String = "",
-    val createdAt: Timestamp? = null
+    var id: String = "",
+    var name: String = "",
+    var createdAt: Timestamp = Timestamp.now(),
+    var sessionCount: Int = 0,
+    var participants: List<Participant> = emptyList(),
 )

@@ -1,7 +1,7 @@
 package com.idk.feature_poker_planning.presentation.rooms
 
 import androidx.lifecycle.SavedStateHandle
-import com.idk.feature_poker_planning.domain.GetUserProfileUseCase
+import com.idk.feature_poker_planning.domain.JoinRoomUseCase
 import com.idk.feature_poker_planning.domain.LoadParticipantsUseCase
 import com.idk.feature_poker_planning.domain.SubmitVoteUseCase
 import com.idk.feature_poker_planning.domain.model.Participant
@@ -35,8 +35,7 @@ class RoomViewModelTest {
     private lateinit var savedStateHandle: SavedStateHandle
     private val loadParticipantsUseCase: LoadParticipantsUseCase = mockk()
     private val submitVoteUseCase: SubmitVoteUseCase = mockk(relaxed = true)
-    private val getUserProfileUseCase: GetUserProfileUseCase = mockk()
-
+    private val joinRoomUseCase: JoinRoomUseCase = mockk(relaxed = true)
     private val dispatcher = StandardTestDispatcher()
 
     @Before
@@ -51,11 +50,12 @@ class RoomViewModelTest {
     }
 
     @Test
-    fun init_loadsParticipants_updatesUiState() = runTest {
-        coEvery { loadParticipantsUseCase(testRoomId) } returns flowOf(participants)
+    fun invoke_updatesUiStateWithDistinctParticipants_whenLoadParticipantsEmits() = runTest {
+        coEvery { joinRoomUseCase(testRoomId) } returns Unit
+        coEvery { loadParticipantsUseCase(testRoomId) } returns flowOf(participants + participants)
 
         val viewModel = RoomViewModel(
-            savedStateHandle, loadParticipantsUseCase, submitVoteUseCase, getUserProfileUseCase
+            savedStateHandle, loadParticipantsUseCase, submitVoteUseCase, joinRoomUseCase
         )
         dispatcher.scheduler.advanceUntilIdle()
 
@@ -65,10 +65,12 @@ class RoomViewModelTest {
     }
 
     @Test
-    fun onVoteInputChange_updatesCurrentVoteInput() = runTest {
+    fun invoke_updatesCurrentVoteInput_whenOnVoteInputChangeCalled() = runTest {
+        coEvery { joinRoomUseCase(testRoomId) } returns Unit
         coEvery { loadParticipantsUseCase(testRoomId) } returns flowOf(emptyList())
+
         val viewModel = RoomViewModel(
-            savedStateHandle, loadParticipantsUseCase, submitVoteUseCase, getUserProfileUseCase
+            savedStateHandle, loadParticipantsUseCase, submitVoteUseCase, joinRoomUseCase
         )
         dispatcher.scheduler.advanceUntilIdle()
 
@@ -78,26 +80,31 @@ class RoomViewModelTest {
     }
 
     @Test
-    fun revealVotes_initialState_updatesVotesRevealed() = runTest {
+    fun invoke_setsVotesRevealedTrue_whenRevealVotesCalled() = runTest {
+        coEvery { joinRoomUseCase(testRoomId) } returns Unit
         coEvery { loadParticipantsUseCase(testRoomId) } returns flowOf(emptyList())
+
         val viewModel = RoomViewModel(
-            savedStateHandle, loadParticipantsUseCase, submitVoteUseCase, getUserProfileUseCase
+            savedStateHandle, loadParticipantsUseCase, submitVoteUseCase, joinRoomUseCase
         )
         dispatcher.scheduler.advanceUntilIdle()
-        assertFalse(viewModel.uiState.value.votesRevealed)
 
+        assertFalse(viewModel.uiState.value.votesRevealed)
         viewModel.revealVotes()
 
         assertTrue(viewModel.uiState.value.votesRevealed)
     }
 
     @Test
-    fun startNewSession_afterReveal_resetsState() = runTest {
+    fun invoke_resetsVotesRevealedAndClearsInput_whenStartNewSessionCalled() = runTest {
+        coEvery { joinRoomUseCase(testRoomId) } returns Unit
         coEvery { loadParticipantsUseCase(testRoomId) } returns flowOf(emptyList())
+
         val viewModel = RoomViewModel(
-            savedStateHandle, loadParticipantsUseCase, submitVoteUseCase, getUserProfileUseCase
+            savedStateHandle, loadParticipantsUseCase, submitVoteUseCase, joinRoomUseCase
         )
         dispatcher.scheduler.advanceUntilIdle()
+
         viewModel.onVoteInputChange("3")
         viewModel.revealVotes()
         assertTrue(viewModel.uiState.value.votesRevealed)
@@ -106,22 +113,17 @@ class RoomViewModelTest {
         viewModel.startNewSession()
 
         assertFalse(viewModel.uiState.value.votesRevealed)
-        assertEquals(TestDataProvider.INVALID_NAME, viewModel.uiState.value.currentVoteInput)
+        assertEquals("", viewModel.uiState.value.currentVoteInput)
     }
 
     @Test
-    fun submitVote_validInput_callsUseCase() = runTest {
+    fun invoke_callsSubmitVoteUseCase_whenCurrentVoteInputIsValid() = runTest {
+        coEvery { joinRoomUseCase(testRoomId) } returns Unit
         coEvery { loadParticipantsUseCase(testRoomId) } returns flowOf(emptyList())
-        coEvery { getUserProfileUseCase() } returns TestDataProvider.defaultUserProfile
-        coEvery {
-            submitVoteUseCase(
-                testRoomId,
-                TestDataProvider.defaultUserProfile.userId,
-                7
-            )
-        } returns Unit
+        coEvery { submitVoteUseCase(testRoomId, 7) } returns Unit
+
         val viewModel = RoomViewModel(
-            savedStateHandle, loadParticipantsUseCase, submitVoteUseCase, getUserProfileUseCase
+            savedStateHandle, loadParticipantsUseCase, submitVoteUseCase, joinRoomUseCase
         )
         dispatcher.scheduler.advanceUntilIdle()
 
@@ -129,20 +131,16 @@ class RoomViewModelTest {
         viewModel.submitVote()
         dispatcher.scheduler.advanceUntilIdle()
 
-        coVerify(exactly = 1) {
-            submitVoteUseCase(
-                testRoomId,
-                TestDataProvider.defaultUserProfile.userId,
-                7
-            )
-        }
+        coVerify(exactly = 1) { submitVoteUseCase(testRoomId, 7) }
     }
 
     @Test
-    fun submitVote_invalidInput_doesNotCallUseCase() = runTest {
+    fun invoke_doesNotCallSubmitVoteUseCase_whenCurrentVoteInputIsInvalid() = runTest {
+        coEvery { joinRoomUseCase(testRoomId) } returns Unit
         coEvery { loadParticipantsUseCase(testRoomId) } returns flowOf(emptyList())
+
         val viewModel = RoomViewModel(
-            savedStateHandle, loadParticipantsUseCase, submitVoteUseCase, getUserProfileUseCase
+            savedStateHandle, loadParticipantsUseCase, submitVoteUseCase, joinRoomUseCase
         )
         dispatcher.scheduler.advanceUntilIdle()
 
@@ -150,6 +148,6 @@ class RoomViewModelTest {
         viewModel.submitVote()
         dispatcher.scheduler.advanceUntilIdle()
 
-        coVerify(exactly = 0) { submitVoteUseCase(any(), any(), any()) }
+        coVerify(exactly = 0) { submitVoteUseCase(any(), any()) }
     }
 }
