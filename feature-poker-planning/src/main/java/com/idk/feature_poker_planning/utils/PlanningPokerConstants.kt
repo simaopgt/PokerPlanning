@@ -10,11 +10,7 @@ object FirestoreConstants {
     const val USER_NAME_FIELD = "name"
     const val VOTE_FIELD = "vote"
     const val USER_AVATAR_FIELD = "avatar"
-    const val SESSION_NUMBER_FIELD = "sessionNumber"
-    const val VOTES_FIELD = "votes"
-    const val AVERAGE_FIELD = "average"
-    const val SESSIONS_COUNT_FIELD = "sessionCount"
-    const val SESSIONS_FIELD = "sessions"
+    const val SPLASH_SCREEN_DELAY = 2500L
 }
 
 object RoomNavArgs {
