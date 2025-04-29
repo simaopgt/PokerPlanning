@@ -37,72 +37,122 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.idk.feature.poker.planning.R
+import com.idk.feature_poker_planning.domain.model.Participant
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RoomRoute(
+    onBack: () -> Unit, modifier: Modifier = Modifier, viewModel: RoomViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    RoomScreen(
+        uiState = uiState,
+        onBack = onBack,
+        onVoteInputChange = viewModel::onVoteInputChange,
+        onVoteClick = viewModel::submitVote,
+        onRevealClick = viewModel::revealVotes,
+        onNewSessionClick = viewModel::startNewSession,
+        modifier = modifier
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RoomScreen(
-    onBack: () -> Unit, modifier: Modifier = Modifier, viewModel: RoomViewModel = hiltViewModel()
+    uiState: RoomUiState,
+    onBack: () -> Unit,
+    onVoteInputChange: (String) -> Unit,
+    onVoteClick: () -> Unit,
+    onRevealClick: () -> Unit,
+    onNewSessionClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val title = uiState.roomName
-    val currentUserId = uiState.currentUserId
-
-    val currentUser = uiState.participants.firstOrNull { it.userId == currentUserId }
-    val hasVoted = currentUser?.vote != null
-    val others = uiState.participants.filter { it.userId != currentUserId }
-    val displayList = listOfNotNull(currentUser) + others
+    val currentUserId by remember { derivedStateOf { uiState.currentUserId } }
+    val participantsDisplay by remember(uiState.participants, currentUserId) {
+        derivedStateOf {
+            val me = uiState.participants.firstOrNull { it.userId == currentUserId }
+            val others = uiState.participants.filter { it.userId != currentUserId }
+            listOfNotNull(me) + others
+        }
+    }
+    val hasVoted by remember(uiState.participants, currentUserId) {
+        derivedStateOf {
+            uiState.participants.any { it.userId == currentUserId && it.vote != null }
+        }
+    }
 
     Scaffold(
+        modifier = modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text(title, style = MaterialTheme.typography.titleLarge) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                })
-        }, modifier = modifier.fillMaxSize()
-    ) { paddingValues ->
+                title = {
+                Text(
+                    text = uiState.roomName, style = MaterialTheme.typography.titleLarge
+                )
+            }, navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.back_content_description)
+                    )
+                }
+            }, colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+            )
+            )
+        }) { padding ->
         Column(
             modifier = Modifier
-                .padding(paddingValues)
+                .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp)
+                .padding(dimensionResource(R.dimen.padding_standard))
         ) {
-            Text("Team", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(displayList, key = { it.userId }) { participant ->
+            Text(
+                text = stringResource(R.string.team_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_small)))
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.spacing_medium))
+            ) {
+                items(participantsDisplay, key = { it.userId }) { participant ->
                     ParticipantAvatar(
-                        avatar = participant.avatar,
-                        name = participant.name,
-                        vote = participant.vote,
-                        isCurrentUser = participant.userId == currentUserId
+                        participant, isCurrentUser = participant.userId == currentUserId
                     )
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_medium)))
 
             if (uiState.votesRevealed) {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    items(displayList, key = { it.userId }) { participant ->
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.spacing_medium))
+                ) {
+                    items(participantsDisplay, key = { it.userId }) { participant ->
                         VoteBubble(vote = participant.vote)
                     }
                 }
-                Spacer(Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_medium)))
             }
 
             InfoCard(
@@ -111,22 +161,22 @@ fun RoomScreen(
                 isLoadingAi = uiState.isLoadingAi
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_medium)))
 
             VoteInputField(
                 voteInput = uiState.currentVoteInput,
-                onValueChange = viewModel::onVoteInputChange,
+                onValueChange = onVoteInputChange,
                 enabled = !hasVoted && !uiState.votesRevealed
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_medium)))
 
             ActionButtons(
                 votesRevealed = uiState.votesRevealed,
                 hasVoted = hasVoted,
-                onVoteClick = viewModel::submitVote,
-                onRevealClick = viewModel::revealVotes,
-                onNewSessionClick = viewModel::startNewSession
+                onVoteClick = onVoteClick,
+                onRevealClick = onRevealClick,
+                onNewSessionClick = onNewSessionClick
             )
         }
     }
@@ -134,11 +184,11 @@ fun RoomScreen(
 
 @Composable
 private fun ParticipantAvatar(
-    avatar: String, name: String, vote: Int?, isCurrentUser: Boolean
+    participant: Participant, isCurrentUser: Boolean
 ) {
     val context = LocalContext.current
-    val resId = remember(avatar) {
-        context.resources.getIdentifier(avatar, "drawable", context.packageName)
+    val resId = remember(participant.avatar) {
+        context.resources.getIdentifier(participant.avatar, "drawable", context.packageName)
     }.takeIf { it != 0 } ?: R.drawable.unknow
 
     Column(
@@ -147,33 +197,34 @@ private fun ParticipantAvatar(
     ) {
         Image(
             painter = painterResource(id = resId),
-            contentDescription = name,
+            contentDescription = stringResource(
+                R.string.avatar_content_description, participant.name
+            ),
             modifier = Modifier
-                .size(56.dp)
+                .size(dimensionResource(R.dimen.avatar_size))
                 .clip(CircleShape)
                 .background(
                     if (isCurrentUser) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.primaryContainer
+                    else MaterialTheme.colorScheme.primaryContainer, shape = CircleShape
                 )
         )
-
-        Spacer(Modifier.height(4.dp))
-
+        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_xsmall)))
         Text(
-            text = if (isCurrentUser) "$name (Você)" else name,
+            text = buildString {
+                append(participant.name)
+                if (isCurrentUser) append(stringResource(R.string.participant_you_suffix))
+            },
             style = MaterialTheme.typography.bodySmall,
             color = if (isCurrentUser) MaterialTheme.colorScheme.onPrimary
             else MaterialTheme.colorScheme.onPrimaryContainer
         )
-
-        Spacer(Modifier.height(4.dp))
-
-        if (vote != null) {
+        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_xsmall)))
+        participant.vote?.let {
             Icon(
                 imageVector = Icons.Default.CheckCircle,
-                contentDescription = "Já votou",
+                contentDescription = stringResource(R.string.has_voted_description),
                 tint = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(dimensionResource(R.dimen.icon_small))
             )
         }
     }
@@ -183,11 +234,15 @@ private fun ParticipantAvatar(
 private fun VoteBubble(vote: Int?) {
     Box(
         modifier = Modifier
-            .size(56.dp)
+            .size(dimensionResource(R.dimen.bubble_size))
             .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
             .wrapContentSize(Alignment.Center)
     ) {
-        Text(text = vote?.toString() ?: "-", style = MaterialTheme.typography.titleMedium)
+        Text(
+            text = vote?.toString() ?: "-",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
     }
 }
 
@@ -196,33 +251,50 @@ private fun InfoCard(
     votesRevealed: Boolean, aiSummary: String, isLoadingAi: Boolean
 ) {
     Card(
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(dimensionResource(R.dimen.corner_radius_small)),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(dimensionResource(R.dimen.padding_standard))) {
             if (!votesRevealed) {
-                Text("Vote na complexidade da tarefa", style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.height(4.dp))
                 Text(
-                    "Pense no nível de esforço ou incerteza envolvido e insira um número que represente sua avaliação. Depois, todos os votos serão discutidos em equipe.",
-                    style = MaterialTheme.typography.bodyMedium
+                    text = stringResource(R.string.vote_prompt),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_xsmall)))
+                Text(
+                    text = stringResource(R.string.vote_instructions),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             } else {
-                Text("Resumo AI:", style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.summary_ai_label),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_small)))
                 when {
                     isLoadingAi -> {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(dimensionResource(R.dimen.loading_indicator_size))
+                        )
                     }
 
                     aiSummary.isNotBlank() -> {
-                        Text(aiSummary, style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            text = aiSummary,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
                     }
 
                     else -> {
                         Text(
-                            "Aguardando sugestão…", style = MaterialTheme.typography.bodyMedium
+                            text = stringResource(R.string.awaiting_suggestion),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                     }
                 }
@@ -236,14 +308,18 @@ private fun VoteInputField(
     voteInput: String, onValueChange: (String) -> Unit, enabled: Boolean
 ) {
     Column {
-        Text("Insira aqui o seu voto:", style = MaterialTheme.typography.bodyMedium)
-        Spacer(Modifier.height(4.dp))
+        Text(
+            text = stringResource(R.string.vote_input_label),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_xsmall)))
         OutlinedTextField(
             value = voteInput,
             onValueChange = onValueChange,
             singleLine = true,
             enabled = enabled,
-            placeholder = { Text("ex: 5") },
+            placeholder = { Text(stringResource(R.string.vote_input_placeholder)) },
             modifier = Modifier.fillMaxWidth()
         )
     }
@@ -258,7 +334,8 @@ private fun ActionButtons(
     onNewSessionClick: () -> Unit
 ) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()
+        horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.spacing_medium)),
+        modifier = Modifier.fillMaxWidth()
     ) {
         Button(
             onClick = onVoteClick,
@@ -266,13 +343,40 @@ private fun ActionButtons(
             modifier = Modifier.weight(1f),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
-            Text("Votar")
+            Text(stringResource(R.string.button_vote))
         }
         Button(
             onClick = if (votesRevealed) onNewSessionClick else onRevealClick,
             modifier = Modifier.weight(1f)
         ) {
-            Text(if (!votesRevealed) "Revelar Votos" else "Nova Sessão")
+            Text(
+                text = if (!votesRevealed) stringResource(R.string.button_reveal_votes)
+                else stringResource(R.string.button_new_session)
+            )
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun RoomScreenPreview() {
+    val sampleState = RoomUiState(
+        roomName = "Sprint 42",
+        participants = listOf(
+            Participant(userId = "u1", name = "Ana", avatar = "avatar_1", vote = null),
+            Participant(userId = "u2", name = "Bruno", avatar = "avatar_2", vote = 5)
+        ),
+        votesRevealed = false,
+        currentVoteInput = "",
+        currentUserId = "u1",
+        aiSummary = "",
+        isLoadingAi = false
+    )
+    RoomScreen(
+        uiState = sampleState,
+        onBack = {},
+        onVoteInputChange = {},
+        onVoteClick = {},
+        onRevealClick = {},
+        onNewSessionClick = {})
 }

@@ -30,6 +30,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -48,6 +49,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.idk.feature.poker.planning.R
 import com.idk.feature_poker_planning.domain.model.Room
+import com.idk.feature_poker_planning.utils.FirestoreConstants.AVATAR_ID_01
+import com.idk.feature_poker_planning.utils.FirestoreConstants.AVATAR_ID_02
+import com.idk.feature_poker_planning.utils.FirestoreConstants.AVATAR_ID_03
+import com.idk.feature_poker_planning.utils.FirestoreConstants.AVATAR_ID_04
+import com.idk.feature_poker_planning.utils.FirestoreConstants.AVATAR_ID_05
+import com.idk.feature_poker_planning.utils.FirestoreConstants.AVATAR_ID_06
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,12 +105,12 @@ fun HomeScreen(
                     val avatarId by remember(state.userAvatar) {
                         derivedStateOf {
                             when (state.userAvatar) {
-                                "avatar_1" -> R.drawable.avatar_1
-                                "avatar_2" -> R.drawable.avatar_2
-                                "avatar_3" -> R.drawable.avatar_3
-                                "avatar_4" -> R.drawable.avatar_4
-                                "avatar_5" -> R.drawable.avatar_5
-                                "avatar_6" -> R.drawable.avatar_6
+                                AVATAR_ID_01 -> R.drawable.avatar_1
+                                AVATAR_ID_02 -> R.drawable.avatar_2
+                                AVATAR_ID_03 -> R.drawable.avatar_3
+                                AVATAR_ID_04 -> R.drawable.avatar_4
+                                AVATAR_ID_05 -> R.drawable.avatar_5
+                                AVATAR_ID_06 -> R.drawable.avatar_6
                                 else -> R.drawable.unknow
                             }
                         }
@@ -124,7 +131,12 @@ fun HomeScreen(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                 }
-            })
+            }, colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+            )
+        )
     }, floatingActionButton = {
         FloatingActionButton(
             onClick = onCreateRoomClick,

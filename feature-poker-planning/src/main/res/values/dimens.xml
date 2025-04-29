@@ -6,7 +6,12 @@
     <dimen name="spacing_small">12dp</dimen>
     <dimen name="spacing_medium">16dp</dimen>
     <dimen name="spacing_large">28dp</dimen>
-    <dimen name="avatar_size">64dp</dimen>
     <dimen name="avatar_image_size">48dp</dimen>
     <dimen name="button_height">56dp</dimen>
+    <dimen name="spacing_xsmall">4dp</dimen>
+    <dimen name="avatar_size">56dp</dimen>
+    <dimen name="bubble_size">56dp</dimen>
+    <dimen name="icon_small">20dp</dimen>
+    <dimen name="loading_indicator_size">24dp</dimen>
+    <dimen name="corner_radius_small">12dp</dimen>
 </resources>

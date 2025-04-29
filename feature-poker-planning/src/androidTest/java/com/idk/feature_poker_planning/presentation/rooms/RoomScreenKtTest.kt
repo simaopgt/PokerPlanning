@@ -8,6 +8,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import com.idk.feature_poker_planning.domain.GenerateConsensusSuggestionUseCase
@@ -69,8 +70,8 @@ class RoomScreenAndroidTest {
         val reset = ResetVotesUseCase(fakeRepository)
         val generate = generateConsensusUseCase
 
-        val vm = RoomViewModel(
-            savedStateHandle = androidx.lifecycle.SavedStateHandle(
+        val viewModel = RoomViewModel(
+            savedStateHandle = SavedStateHandle(
                 mapOf(
                     PokerPlanningDestinations.ARG_ROOM_ID to testRoomId,
                     PokerPlanningDestinations.ARG_ROOM_NAME to testRoomName
@@ -82,8 +83,11 @@ class RoomScreenAndroidTest {
             resetVotesUseCase = reset,
             generateConsensusUseCase = generate
         )
+
         composeTestRule.setContent {
-            RoomScreen(onBack = {}, viewModel = vm)
+            RoomRoute(
+                onBack = { }, viewModel = viewModel
+            )
         }
     }
 
@@ -122,12 +126,13 @@ class RoomScreenAndroidTest {
         private val participantsFlow: Flow<List<Participant>>
     ) : RoomRepository {
         override suspend fun createRoom(room: Room) = Unit
-        override fun observeRooms(): Flow<List<Room>> = flowOf()
+        override fun observeRooms() = flowOf<List<Room>>()
         override suspend fun addParticipant(
             roomId: String, userId: String, name: String, avatar: String
         ) = Unit
 
         override fun observeParticipants(roomId: String): Flow<List<Participant>> = participantsFlow
+
         override suspend fun submitVote(
             roomId: String, userId: String, name: String, avatar: String, vote: Int
         ) = Unit

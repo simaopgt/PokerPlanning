@@ -1,6 +1,8 @@
 package com.idk.feature_poker_planning.navigation
 
 import android.net.Uri
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -8,7 +10,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.idk.feature_poker_planning.presentation.home.HomeRoute
-import com.idk.feature_poker_planning.presentation.rooms.RoomScreen
+import com.idk.feature_poker_planning.presentation.rooms.RoomRoute
 import com.idk.feature_poker_planning.presentation.splash.SplashScreen
 import com.idk.feature_poker_planning.presentation.welcome.WelcomeRoute
 
@@ -57,8 +59,10 @@ fun NavGraphBuilder.pokerPlanningNavGraph(
             type = NavType.StringType
         })
     ) { backStackEntry ->
-        RoomScreen(
-            onBack = { navController.popBackStack() }, viewModel = hiltViewModel(backStackEntry)
+        RoomRoute(
+            onBack = { navController.popBackStack() },
+            modifier = Modifier.fillMaxSize(),
+            viewModel = hiltViewModel(backStackEntry)
         )
     }
 }

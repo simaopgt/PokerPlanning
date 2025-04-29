@@ -13,5 +13,20 @@
     <string name="dialog_placeholder_room_name">ex: JIRA-TASK-0001</string>
     <string name="dialog_confirm">Criar</string>
     <string name="dialog_cancel">Cancelar</string>
+    <string name="back_content_description">Voltar</string>
+    <string name="team_title">Team</string>
+    <string name="vote_prompt">Vote na complexidade da tarefa</string>
+    <string name="vote_instructions">
+        Pense no nível de esforço ou incerteza envolvido e insira um número que represente sua avaliação. Depois, todos os votos serão discutidos em equipe.
+    </string>
+    <string name="summary_ai_label">Resumo AI:</string>
+    <string name="awaiting_suggestion">Aguardando sugestão…</string>
+    <string name="vote_input_label">Insira aqui o seu voto:</string>
+    <string name="vote_input_placeholder">ex: 5</string>
+    <string name="has_voted_description">Já votou</string>
+    <string name="button_vote">Votar</string>
+    <string name="button_reveal_votes">Revelar Votos</string>
+    <string name="button_new_session">Nova Sessão</string>
+    <string name="participant_you_suffix"> (Você)</string>
     <string name="avatar_content_description">Avatar de %1$s</string>
 </resources>
