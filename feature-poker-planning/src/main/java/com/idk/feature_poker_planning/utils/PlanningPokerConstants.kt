@@ -11,8 +11,10 @@ object FirestoreConstants {
     const val VOTE_FIELD = "vote"
     const val USER_AVATAR_FIELD = "avatar"
     const val SPLASH_SCREEN_DELAY = 2500L
-}
-
-object RoomNavArgs {
-    const val ARG_ROOM_ID = "roomId"
+    const val AVATAR_ID_01 = "avatar_1"
+    const val AVATAR_ID_02 = "avatar_2"
+    const val AVATAR_ID_03 = "avatar_3"
+    const val AVATAR_ID_04 = "avatar_4"
+    const val AVATAR_ID_05 = "avatar_5"
+    const val AVATAR_ID_06 = "avatar_6"
 }

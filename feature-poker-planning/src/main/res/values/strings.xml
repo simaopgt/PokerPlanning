@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="welcome_choose_avatar">Escolha seu avatar</string>
+    <string name="avatar_description">Avatar</string>
+    <string name="welcome_enter_name">Insira o seu nome</string>
+    <string name="hint_enter_name">Insira aqui o seu nome</string>
+    <string name="button_start_game">Comece a Jogar</string>
+</resources>

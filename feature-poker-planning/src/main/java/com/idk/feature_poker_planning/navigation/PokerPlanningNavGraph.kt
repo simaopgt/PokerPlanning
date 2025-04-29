@@ -10,7 +10,7 @@ import androidx.navigation.navArgument
 import com.idk.feature_poker_planning.presentation.home.HomeScreen
 import com.idk.feature_poker_planning.presentation.rooms.RoomScreen
 import com.idk.feature_poker_planning.presentation.splash.SplashScreen
-import com.idk.feature_poker_planning.presentation.welcome.WelcomeScreen
+import com.idk.feature_poker_planning.presentation.welcome.WelcomeRoute
 
 object PokerPlanningDestinations {
     const val SPLASH = "splash"
@@ -21,8 +21,7 @@ object PokerPlanningDestinations {
     const val ARG_ROOM_NAME = "roomName"
 
     fun createHomeRoute() = HOME
-    fun createRoomRoute(id: String, name: String): String =
-        "room/$id/${Uri.encode(name)}"
+    fun createRoomRoute(id: String, name: String): String = "room/$id/${Uri.encode(name)}"
 }
 
 fun NavGraphBuilder.pokerPlanningNavGraph(
@@ -33,7 +32,7 @@ fun NavGraphBuilder.pokerPlanningNavGraph(
     }
 
     composable(PokerPlanningDestinations.WELCOME) {
-        WelcomeScreen(
+        WelcomeRoute(
             onNavigateNext = {
                 navController.navigate(PokerPlanningDestinations.createHomeRoute()) {
                     popUpTo(PokerPlanningDestinations.WELCOME) { inclusive = true }
@@ -47,8 +46,7 @@ fun NavGraphBuilder.pokerPlanningNavGraph(
                 navController.navigate(
                     PokerPlanningDestinations.createRoomRoute(roomId, roomName)
                 )
-            }
-        )
+            })
     }
 
     composable(
