@@ -3,6 +3,17 @@ package com.idk.feature_poker_planning.domain
 import android.annotation.SuppressLint
 import com.idk.feature_poker_planning.domain.model.Participant
 import com.idk.feature_poker_planning.domain.repository.VertexAiRepository
+import com.idk.feature_poker_planning.utils.FirestoreConstants.ERROR_CANNOT_DETERMINE_MAX_VOTE
+import com.idk.feature_poker_planning.utils.FirestoreConstants.ERROR_CANNOT_DETERMINE_MIN_VOTE
+import com.idk.feature_poker_planning.utils.FirestoreConstants.ERROR_MAX_PARTICIPANT_NOT_FOUND
+import com.idk.feature_poker_planning.utils.FirestoreConstants.ERROR_MIN_PARTICIPANT_NOT_FOUND
+import com.idk.feature_poker_planning.utils.FirestoreConstants.ERROR_NO_VOTES
+import com.idk.feature_poker_planning.utils.FirestoreConstants.PROMPT_CONSENSUS
+import com.idk.feature_poker_planning.utils.FirestoreConstants.PROMPT_MAX_VOTE
+import com.idk.feature_poker_planning.utils.FirestoreConstants.PROMPT_MIN_VOTE
+import com.idk.feature_poker_planning.utils.FirestoreConstants.PROMPT_PREFIX
+import com.idk.feature_poker_planning.utils.FirestoreConstants.PROMPT_STYLE
+import com.idk.feature_poker_planning.utils.FirestoreConstants.PROMPT_SUGGESTION
 import javax.inject.Inject
 
 class GenerateConsensusSuggestionUseCase @Inject constructor(
@@ -41,23 +52,5 @@ class GenerateConsensusSuggestionUseCase @Inject constructor(
         }
 
         return vertexAiRepository.getSummary(promptText)
-    }
-
-    private companion object {
-        const val ERROR_NO_VOTES = "Nenhum voto disponível para gerar sugestão"
-        const val ERROR_CANNOT_DETERMINE_MAX_VOTE = "Não foi possível determinar o maior voto"
-        const val ERROR_CANNOT_DETERMINE_MIN_VOTE = "Não foi possível determinar o menor voto"
-        const val ERROR_MAX_PARTICIPANT_NOT_FOUND = "Participante com maior voto não encontrado"
-        const val ERROR_MIN_PARTICIPANT_NOT_FOUND = "Participante com menor voto não encontrado"
-
-        const val PROMPT_PREFIX = "Este é um app de planning poker."
-        const val PROMPT_MAX_VOTE = "O maior voto foi %d pelo usuário %s. "
-        const val PROMPT_MIN_VOTE = "O menor voto foi %d pelo usuário %s. "
-        const val PROMPT_SUGGESTION =
-            "Sugira um único texto, sem mais de uma opção, instigando os usuários a votarem novamente caso haja divergência de valores entre o voto máximo e mínimo "
-        const val PROMPT_CONSENSUS =
-            "para tentarem chegar em um consenso, afinal esse é o objetivo da planning poker."
-        const val PROMPT_STYLE =
-            "Utilize uma linguagem amigável e encorajadora, como se você fosse um facilitador."
     }
 }
