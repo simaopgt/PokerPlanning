@@ -5,4 +5,13 @@
     <string name="welcome_enter_name">Insira o seu nome</string>
     <string name="hint_enter_name">Insira aqui o seu nome</string>
     <string name="button_start_game">Comece a Jogar</string>
+    <string name="home_greeting">Olá, %1$s</string>
+    <string name="fab_create_room">Criar sala</string>
+    <string name="home_room_list_title">Lista de Salas</string>
+    <string name="home_room_id_prefix">ID: %1$s</string>
+    <string name="dialog_title_room_name">Nome da Sala</string>
+    <string name="dialog_placeholder_room_name">ex: JIRA-TASK-0001</string>
+    <string name="dialog_confirm">Criar</string>
+    <string name="dialog_cancel">Cancelar</string>
+    <string name="avatar_content_description">Avatar de %1$s</string>
 </resources>

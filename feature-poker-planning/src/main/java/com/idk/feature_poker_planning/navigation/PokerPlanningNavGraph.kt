@@ -7,7 +7,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.idk.feature_poker_planning.presentation.home.HomeScreen
+import com.idk.feature_poker_planning.presentation.home.HomeRoute
 import com.idk.feature_poker_planning.presentation.rooms.RoomScreen
 import com.idk.feature_poker_planning.presentation.splash.SplashScreen
 import com.idk.feature_poker_planning.presentation.welcome.WelcomeRoute
@@ -28,7 +28,7 @@ fun NavGraphBuilder.pokerPlanningNavGraph(
     navController: NavHostController
 ) {
     composable(PokerPlanningDestinations.SPLASH) {
-        SplashScreen(navController = navController)
+        SplashScreen(navController)
     }
 
     composable(PokerPlanningDestinations.WELCOME) {
@@ -41,7 +41,7 @@ fun NavGraphBuilder.pokerPlanningNavGraph(
     }
 
     composable(PokerPlanningDestinations.HOME) {
-        HomeScreen(
+        HomeRoute(
             onRoomClick = { roomId, roomName ->
                 navController.navigate(
                     PokerPlanningDestinations.createRoomRoute(roomId, roomName)
@@ -55,7 +55,8 @@ fun NavGraphBuilder.pokerPlanningNavGraph(
             type = NavType.StringType
         }, navArgument(PokerPlanningDestinations.ARG_ROOM_NAME) {
             type = NavType.StringType
-        })) { backStackEntry ->
+        })
+    ) { backStackEntry ->
         RoomScreen(
             onBack = { navController.popBackStack() }, viewModel = hiltViewModel(backStackEntry)
         )
