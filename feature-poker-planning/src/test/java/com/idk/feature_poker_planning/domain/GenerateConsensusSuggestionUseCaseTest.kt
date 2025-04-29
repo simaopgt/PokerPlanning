@@ -42,7 +42,7 @@ class GenerateConsensusSuggestionUseCaseTest {
             append("Este é um app de planning poker.")
             append("O maior voto foi 8 pelo usuário Bob. ")
             append("O menor voto foi 3 pelo usuário Alice. ")
-            append("Sugira um único texto, sem mais de uma opção, instigando os usuários a votarem novamente caso haja divergencia de valores entre o voto máximo e mínimo ")
+            append("Sugira um único texto, sem mais de uma opção, instigando os usuários a votarem novamente caso haja divergência de valores entre o voto máximo e mínimo ")
             append("para tentarem chegar em um consenso, afinal esse é o objetivo da planning poker.")
             append("Utilize uma linguagem amigável e encorajadora, como se você fosse um facilitador.")
         }
