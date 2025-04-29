@@ -1,13 +1,14 @@
 package com.idk.feature_poker_planning.presentation.rooms
 
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
+import com.idk.feature_poker_planning.domain.GenerateConsensusSuggestionUseCase
 import com.idk.feature_poker_planning.domain.JoinRoomUseCase
 import com.idk.feature_poker_planning.domain.LoadParticipantsUseCase
 import com.idk.feature_poker_planning.domain.ResetVotesUseCase
 import com.idk.feature_poker_planning.domain.SubmitVoteUseCase
 import com.idk.feature_poker_planning.domain.model.Participant
 import com.idk.feature_poker_planning.navigation.PokerPlanningDestinations
-import com.idk.feature_poker_planning.utils.RoomNavArgs
 import com.idk.feature_poker_planning.utils.TestDataProvider
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -16,6 +17,7 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import junit.framework.Assert.assertEquals
 import junit.framework.Assert.assertFalse
+import junit.framework.Assert.assertNull
 import junit.framework.Assert.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -33,8 +35,8 @@ class RoomViewModelTest {
     private val testRoomId = TestDataProvider.defaultRoom.id
     private val testRoomName = TestDataProvider.defaultRoom.name
     private val participants = listOf(
-        Participant(userId = "u1", name = "Alice", vote = null),
-        Participant(userId = "u2", name = "Bob", vote = null)
+        Participant(userId = "u1", name = "Alice", avatar = "", vote = null),
+        Participant(userId = "u2", name = "Bob", avatar = "", vote = null)
     )
 
     private lateinit var savedStateHandle: SavedStateHandle
@@ -42,17 +44,20 @@ class RoomViewModelTest {
     private val submitVoteUseCase: SubmitVoteUseCase = mockk(relaxed = true)
     private val joinRoomUseCase: JoinRoomUseCase = mockk(relaxed = true)
     private val resetVotesUseCase: ResetVotesUseCase = mockk(relaxed = true)
+    private val generateConsensusUseCase: GenerateConsensusSuggestionUseCase = mockk(relaxed = true)
     private val dispatcher = StandardTestDispatcher()
 
     @Before
     fun setup() {
-        mockkStatic(android.net.Uri::class)
-        every { android.net.Uri.decode(any()) } answers { it.invocation.args[0] as String }
+        mockkStatic(Uri::class)
+        every { Uri.decode(any()) } answers { it.invocation.args[0] as String }
         Dispatchers.setMain(dispatcher)
-        savedStateHandle = SavedStateHandle(mapOf(
-            PokerPlanningDestinations.ARG_ROOM_ID to testRoomId,
-            PokerPlanningDestinations.ARG_ROOM_NAME to "TestRoom"
-        ))
+        savedStateHandle = SavedStateHandle(
+            mapOf(
+                PokerPlanningDestinations.ARG_ROOM_ID to testRoomId,
+                PokerPlanningDestinations.ARG_ROOM_NAME to testRoomName
+            )
+        )
     }
 
     @After
@@ -70,7 +75,8 @@ class RoomViewModelTest {
             loadParticipantsUseCase,
             submitVoteUseCase,
             joinRoomUseCase,
-            resetVotesUseCase
+            resetVotesUseCase,
+            generateConsensusUseCase
         )
         dispatcher.scheduler.advanceUntilIdle()
 
@@ -89,7 +95,8 @@ class RoomViewModelTest {
             loadParticipantsUseCase,
             submitVoteUseCase,
             joinRoomUseCase,
-            resetVotesUseCase
+            resetVotesUseCase,
+            generateConsensusUseCase
         )
         dispatcher.scheduler.advanceUntilIdle()
 
@@ -98,7 +105,7 @@ class RoomViewModelTest {
     }
 
     @Test
-    fun invoke_setsVotesRevealedTrue_whenRevealVotesCalled() = runTest {
+    fun invoke_setsVotesRevealedTrueAndLoading_whenRevealVotesCalled() = runTest {
         coEvery { joinRoomUseCase(testRoomId) } returns Unit
         coEvery { loadParticipantsUseCase(testRoomId) } returns flowOf(emptyList())
 
@@ -107,13 +114,24 @@ class RoomViewModelTest {
             loadParticipantsUseCase,
             submitVoteUseCase,
             joinRoomUseCase,
-            resetVotesUseCase
+            resetVotesUseCase,
+            generateConsensusUseCase
         )
         dispatcher.scheduler.advanceUntilIdle()
 
         assertFalse(viewModel.uiState.value.votesRevealed)
+        assertFalse(viewModel.uiState.value.isLoadingAi)
+
         viewModel.revealVotes()
-        assertTrue(viewModel.uiState.value.votesRevealed)
+        val loadingState = viewModel.uiState.value
+        assertTrue(loadingState.votesRevealed)
+        assertTrue(loadingState.isLoadingAi)
+        assertNull(loadingState.aiError)
+
+        dispatcher.scheduler.advanceUntilIdle()
+        val loadedState = viewModel.uiState.value
+        assertFalse(loadedState.isLoadingAi)
+        assertEquals("", loadedState.aiSummary)
     }
 
     @Test
@@ -126,12 +144,14 @@ class RoomViewModelTest {
             loadParticipantsUseCase,
             submitVoteUseCase,
             joinRoomUseCase,
-            resetVotesUseCase
+            resetVotesUseCase,
+            generateConsensusUseCase
         )
         dispatcher.scheduler.advanceUntilIdle()
 
         viewModel.onVoteInputChange("3")
         viewModel.revealVotes()
+        dispatcher.scheduler.advanceUntilIdle()
         assertTrue(viewModel.uiState.value.votesRevealed)
         assertEquals("3", viewModel.uiState.value.currentVoteInput)
 
@@ -153,7 +173,8 @@ class RoomViewModelTest {
             loadParticipantsUseCase,
             submitVoteUseCase,
             joinRoomUseCase,
-            resetVotesUseCase
+            resetVotesUseCase,
+            generateConsensusUseCase
         )
         dispatcher.scheduler.advanceUntilIdle()
 
@@ -174,7 +195,8 @@ class RoomViewModelTest {
             loadParticipantsUseCase,
             submitVoteUseCase,
             joinRoomUseCase,
-            resetVotesUseCase
+            resetVotesUseCase,
+            generateConsensusUseCase
         )
         dispatcher.scheduler.advanceUntilIdle()
 
@@ -196,7 +218,8 @@ class RoomViewModelTest {
             loadParticipantsUseCase,
             submitVoteUseCase,
             joinRoomUseCase,
-            resetVotesUseCase
+            resetVotesUseCase,
+            generateConsensusUseCase
         )
         dispatcher.scheduler.advanceUntilIdle()
 

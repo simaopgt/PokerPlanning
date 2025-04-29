@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.idk.feature_poker_planning.domain.GenerateConsensusSuggestionUseCase
 import com.idk.feature_poker_planning.domain.JoinRoomUseCase
 import com.idk.feature_poker_planning.domain.LoadParticipantsUseCase
 import com.idk.feature_poker_planning.domain.ResetVotesUseCase
@@ -24,7 +25,8 @@ class RoomViewModel @Inject constructor(
     private val loadParticipantsUseCase: LoadParticipantsUseCase,
     private val submitVoteUseCase: SubmitVoteUseCase,
     private val joinRoomUseCase: JoinRoomUseCase,
-    private val resetVotesUseCase: ResetVotesUseCase
+    private val resetVotesUseCase: ResetVotesUseCase,
+    private val generateConsensusUseCase: GenerateConsensusSuggestionUseCase
 ) : ViewModel() {
 
     private val roomId: String = checkNotNull(
@@ -68,10 +70,6 @@ class RoomViewModel @Inject constructor(
         }
     }
 
-    fun revealVotes() {
-        _uiState.update { it.copy(votesRevealed = true) }
-    }
-
     fun startNewSession() {
         viewModelScope.launch {
             resetVotesUseCase(roomId)
@@ -80,6 +78,26 @@ class RoomViewModel @Inject constructor(
                 it.copy(
                     votesRevealed = false, currentVoteInput = ""
                 )
+            }
+        }
+    }
+
+    fun revealVotes() {
+        _uiState.update { it.copy(votesRevealed = true, isLoadingAi = true, aiError = null) }
+
+        viewModelScope.launch {
+            runCatching {
+                generateConsensusUseCase(_uiState.value.participants)
+            }.onSuccess { suggestion ->
+                _uiState.update {
+                    it.copy(aiSummary = suggestion, isLoadingAi = false)
+                }
+            }.onFailure { e ->
+                _uiState.update {
+                    it.copy(
+                        aiError = e.message ?: "Erro ao gerar sugestão", isLoadingAi = false
+                    )
+                }
             }
         }
     }

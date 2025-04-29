@@ -10,6 +10,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
+import com.idk.feature_poker_planning.domain.GenerateConsensusSuggestionUseCase
 import com.idk.feature_poker_planning.domain.GetUserProfileUseCase
 import com.idk.feature_poker_planning.domain.JoinRoomUseCase
 import com.idk.feature_poker_planning.domain.LoadParticipantsUseCase
@@ -41,11 +42,11 @@ class RoomScreenAndroidTest {
 
     private lateinit var fakeRepository: FakeRoomRepository
     private val mockProfileUseCase = mockk<GetUserProfileUseCase>()
-
     private lateinit var loadParticipantsUseCase: LoadParticipantsUseCase
     private lateinit var joinRoomUseCase: JoinRoomUseCase
     private lateinit var submitVoteUseCase: SubmitVoteUseCase
     private lateinit var resetVotesUseCase: ResetVotesUseCase
+    private lateinit var generateConsensusUseCase: GenerateConsensusSuggestionUseCase
 
     @Before
     fun setUp() {
@@ -54,8 +55,10 @@ class RoomScreenAndroidTest {
         joinRoomUseCase = JoinRoomUseCase(mockProfileUseCase, fakeRepository)
         submitVoteUseCase = SubmitVoteUseCase(fakeRepository, mockProfileUseCase)
         resetVotesUseCase = ResetVotesUseCase(fakeRepository)
+        generateConsensusUseCase = mockk(relaxed = true)
 
         coEvery { mockProfileUseCase() } returns UiTestsDataProvider.DEFAULT_USER_PROFILE
+        coEvery { generateConsensusUseCase(any()) } returns ""
     }
 
     private fun setContentWith(participants: List<Participant>) {
@@ -64,6 +67,7 @@ class RoomScreenAndroidTest {
         val join = JoinRoomUseCase(mockProfileUseCase, fakeRepository)
         val submit = SubmitVoteUseCase(fakeRepository, mockProfileUseCase)
         val reset = ResetVotesUseCase(fakeRepository)
+        val generate = generateConsensusUseCase
 
         val vm = RoomViewModel(
             savedStateHandle = androidx.lifecycle.SavedStateHandle(
@@ -75,7 +79,8 @@ class RoomScreenAndroidTest {
             loadParticipantsUseCase = load,
             submitVoteUseCase = submit,
             joinRoomUseCase = join,
-            resetVotesUseCase = reset
+            resetVotesUseCase = reset,
+            generateConsensusUseCase = generate
         )
         composeTestRule.setContent {
             RoomScreen(onBack = {}, viewModel = vm)

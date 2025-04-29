@@ -28,6 +28,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -52,9 +53,7 @@ import com.idk.feature.poker.planning.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RoomScreen(
-    onBack: () -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: RoomViewModel = hiltViewModel()
+    onBack: () -> Unit, modifier: Modifier = Modifier, viewModel: RoomViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val title = uiState.roomName
@@ -73,10 +72,8 @@ fun RoomScreen(
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                }
-            )
-        },
-        modifier = modifier.fillMaxSize()
+                })
+        }, modifier = modifier.fillMaxSize()
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -86,18 +83,17 @@ fun RoomScreen(
         ) {
             Text("Team", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
-
             LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(displayList, key = { it.userId }) { participant ->
                     ParticipantAvatar(
                         avatar = participant.avatar,
                         name = participant.name,
                         vote = participant.vote,
-                        isCurrentUser = participant.userId == currentUserId,
-                        votesRevealed = uiState.votesRevealed
+                        isCurrentUser = participant.userId == currentUserId
                     )
                 }
             }
+
             Spacer(Modifier.height(16.dp))
 
             if (uiState.votesRevealed) {
@@ -109,7 +105,12 @@ fun RoomScreen(
                 Spacer(Modifier.height(16.dp))
             }
 
-            InfoCard(votesRevealed = uiState.votesRevealed)
+            InfoCard(
+                votesRevealed = uiState.votesRevealed,
+                aiSummary = uiState.aiSummary,
+                isLoadingAi = uiState.isLoadingAi
+            )
+
             Spacer(Modifier.height(16.dp))
 
             VoteInputField(
@@ -117,6 +118,7 @@ fun RoomScreen(
                 onValueChange = viewModel::onVoteInputChange,
                 enabled = !hasVoted && !uiState.votesRevealed
             )
+
             Spacer(Modifier.height(16.dp))
 
             ActionButtons(
@@ -132,11 +134,7 @@ fun RoomScreen(
 
 @Composable
 private fun ParticipantAvatar(
-    avatar: String,
-    name: String,
-    vote: Int?,
-    isCurrentUser: Boolean,
-    votesRevealed: Boolean
+    avatar: String, name: String, vote: Int?, isCurrentUser: Boolean
 ) {
     val context = LocalContext.current
     val resId = remember(avatar) {
@@ -154,10 +152,8 @@ private fun ParticipantAvatar(
                 .size(56.dp)
                 .clip(CircleShape)
                 .background(
-                    if (isCurrentUser)
-                        MaterialTheme.colorScheme.primary
-                    else
-                        MaterialTheme.colorScheme.primaryContainer
+                    if (isCurrentUser) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.primaryContainer
                 )
         )
 
@@ -166,10 +162,8 @@ private fun ParticipantAvatar(
         Text(
             text = if (isCurrentUser) "$name (Você)" else name,
             style = MaterialTheme.typography.bodySmall,
-            color = if (isCurrentUser)
-                MaterialTheme.colorScheme.onPrimary
-            else
-                MaterialTheme.colorScheme.onPrimaryContainer
+            color = if (isCurrentUser) MaterialTheme.colorScheme.onPrimary
+            else MaterialTheme.colorScheme.onPrimaryContainer
         )
 
         Spacer(Modifier.height(4.dp))
@@ -198,7 +192,9 @@ private fun VoteBubble(vote: Int?) {
 }
 
 @Composable
-private fun InfoCard(votesRevealed: Boolean) {
+private fun InfoCard(
+    votesRevealed: Boolean, aiSummary: String, isLoadingAi: Boolean
+) {
     Card(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
@@ -213,12 +209,23 @@ private fun InfoCard(votesRevealed: Boolean) {
                     style = MaterialTheme.typography.bodyMedium
                 )
             } else {
-                Text("Resultado:", style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    "A média foi xx, quem deu a menor nota foi Fulano, quem deu a maior nota foi Cicrano.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Text("Resumo AI:", style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(8.dp))
+                when {
+                    isLoadingAi -> {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    }
+
+                    aiSummary.isNotBlank() -> {
+                        Text(aiSummary, style = MaterialTheme.typography.bodyMedium)
+                    }
+
+                    else -> {
+                        Text(
+                            "Aguardando sugestão…", style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
             }
         }
     }
@@ -226,9 +233,7 @@ private fun InfoCard(votesRevealed: Boolean) {
 
 @Composable
 private fun VoteInputField(
-    voteInput: String,
-    onValueChange: (String) -> Unit,
-    enabled: Boolean
+    voteInput: String, onValueChange: (String) -> Unit, enabled: Boolean
 ) {
     Column {
         Text("Insira aqui o seu voto:", style = MaterialTheme.typography.bodyMedium)
@@ -253,8 +258,7 @@ private fun ActionButtons(
     onNewSessionClick: () -> Unit
 ) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.fillMaxWidth()
+        horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()
     ) {
         Button(
             onClick = onVoteClick,

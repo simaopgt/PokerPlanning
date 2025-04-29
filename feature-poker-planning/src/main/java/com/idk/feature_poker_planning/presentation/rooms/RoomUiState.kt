@@ -8,4 +8,7 @@ data class RoomUiState(
     val votesRevealed: Boolean = false,
     val currentVoteInput: String = "",
     val currentUserId: String = "",
+    val aiSummary: String = "",
+    val isLoadingAi: Boolean = false,
+    val aiError: String? = null
 )

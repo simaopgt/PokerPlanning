@@ -23,6 +23,7 @@ androidxDataStore = "1.1.1"
 androidxTestRunner = "1.6.2"
 testOrchestrator = "1.5.1"
 testServices = "1.5.0"
+firebaseVertexai = "16.4.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -65,6 +66,7 @@ androidx-test-services = { group = "androidx.test.services", name = "test-servic
 
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+firebase-vertexai = { group = "com.google.firebase", name = "firebase-vertexai", version.ref = "firebaseVertexai" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
