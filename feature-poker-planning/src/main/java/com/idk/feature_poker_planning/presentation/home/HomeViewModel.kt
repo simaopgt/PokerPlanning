@@ -42,7 +42,6 @@ class HomeViewModel @Inject constructor(
     fun createRoom(desiredName: String? = null) {
         viewModelScope.launch {
             createRoomUseCase(desiredName)
-            observeRooms()
         }
     }
 
